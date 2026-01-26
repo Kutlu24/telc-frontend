@@ -45,134 +45,177 @@ button,select,input{padding:8px;margin:5px}
 <div id="list"></div>
 <div id="exam" class="hidden"></div>
 <div id="result" class="hidden"></div>
+<button id="printBtn" class="hidden" onclick="printResult()">Ergebnisse drucken</button>
 
 </section>
 
 </main>
 
 <script>
-const PASSWORD="1234";
-let user="",mode="exam";
-let texts=[],qs=[],current=null,played=false,score=0;
+let user="", mode="exam";
+let texts=[], qs=[], current=null, played=false, score=0;
 
 /* LOGIN */
-function login(){
- user=document.getElementById("user").value;
- if(document.getElementById("pw").value===PASSWORD && user){
-   loginBox.style.display="none";
-   app.classList.remove("hidden");
- }else alert("Fehler");
+async function login(){
+  user=document.getElementById("user").value;
+  const pass=document.getElementById("pw").value;
+  try{
+    const res = await fetch("https://telc-backend-yjs9.onrender.com/login", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({username: user, password: pass})
+    });
+    const data = await res.json();
+    if(data.token){
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      document.getElementById("loginBox").style.display="none";
+      document.getElementById("app").classList.remove("hidden");
+      alert("Login erfolgreich, Rolle: " + data.role);
+    } else alert("Login fehlgeschlagen");
+  } catch(e){
+    alert("Fehler: " + e.message);
+    console.error(e);
+  }
 }
 
 /* LOAD */
 async function loadExams(){
- mode=document.getElementById("mode").value;
- const teil=document.getElementById("teil").value;
- texts=await (await fetch("data/texts.json")).json();
- qs=await (await fetch("data/questions.json")).json();
- list.innerHTML="";
- texts.filter(x=>x.teil===teil).forEach(x=>{
-   list.innerHTML+=`<button onclick="openExam(${x.id})">${x.title}</button><br>`;
- });
+  mode=document.getElementById("mode").value;
+  const teil=document.getElementById("teil").value;
+  if(!teil){alert("Bitte Teil wählen"); return;}
+
+  const token = localStorage.getItem("token");
+  if(!token){alert("Bitte einloggen"); return;}
+
+  try{
+    const res = await fetch("https://telc-backend-yjs9.onrender.com/exams?teil="+encodeURIComponent(teil), {
+      headers: {"Authorization": "Bearer " + token}
+    });
+    texts = await res.json();
+
+    const qsRes = await fetch("https://telc-backend-yjs9.onrender.com/questions?teil="+encodeURIComponent(teil), {
+      headers: {"Authorization": "Bearer " + token}
+    });
+    qs = await qsRes.json();
+
+    document.getElementById("list").innerHTML="";
+    texts.forEach(x=>{
+      document.getElementById("list").innerHTML+=`<button onclick="openExam(${x.id})">${x.title}</button><br>`;
+    });
+  } catch(e){alert("Fehler: "+e.message);}
 }
 
 /* OPEN */
 function openExam(id){
- current=texts.find(x=>x.id===id);
- played=false; score=0;
- exam.classList.remove("hidden");
- exam.innerHTML=`<button onclick="play()">Audio starten</button><div id="q"></div>`;
+  current=texts.find(x=>x.id===id);
+  played=false; score=0;
+  const ex=document.getElementById("exam");
+  ex.classList.remove("hidden");
+  ex.innerHTML=`<button onclick="play()">Audio starten</button><div id="q"></div>`;
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("printBtn").classList.add("hidden");
 }
 
 /* AUDIO */
 function play(){
- if(played) return; played=true;
- const u=new SpeechSynthesisUtterance(current.text);
- u.lang="de-DE";
- u.onend=()=>setTimeout(showQ,2000);
- speechSynthesis.speak(u);
+  if(played) return; played=true;
+  const u=new SpeechSynthesisUtterance(current.text);
+  u.lang="de-DE";
+  u.onend=()=>setTimeout(showQ,2000);
+  speechSynthesis.speak(u);
 }
 
 /* QUESTIONS */
 function showQ(){
- const q=qs.find(x=>x.exam_id===current.id);
- const box=document.getElementById("q");
+  const q=qs.find(x=>x.exam_id===current.id);
+  const box=document.getElementById("q");
+  box.innerHTML="";
 
- /* TEIL 1 – DRAG */
- if(q.type==="match"){
-   box.innerHTML="<h3>Zuordnung</h3>";
-   q.options.forEach(o=>{
-     box.innerHTML+=`<div class="drop" ondrop="drop(event)" ondragover="allow(event)" data-person="${o}">${o}</div>`;
-   });
-   q.speakers.forEach(s=>{
-     box.innerHTML+=`<div class="drag" draggable="true" ondragstart="drag(event)" data-sp="${s}">Sprecher ${s}</div>`;
-   });
-   box.innerHTML+=`<button onclick="checkMatch()">Auswerten</button>`;
- }
+  if(q.type==="match"){
+    box.innerHTML="<h3>Zuordnung</h3>";
+    q.options.forEach(o=>{
+      box.innerHTML+=`<div class="drop" ondrop="drop(event)" ondragover="allow(event)" data-person="${o}">${o}</div>`;
+    });
+    q.speakers.forEach(s=>{
+      box.innerHTML+=`<div class="drag" draggable="true" ondragstart="drag(event)" data-sp="${s}">Sprecher ${s}</div>`;
+    });
+    box.innerHTML+=`<button onclick="checkMatch()">Auswerten</button>`;
+  }
 
- /* TEIL 2 */
- if(q.type==="multiple"){
-   q.questions.forEach((x,i)=>{
-     box.innerHTML+=`<p>${x.q}</p>`;
-     x.opts.forEach(o=>{
-       box.innerHTML+=`<label><input type="radio" name="q${i}" value="${o}">${o}</label><br>`;
-     });
-   });
-   box.innerHTML+=`<button onclick="checkMultiple()">Auswerten</button>`;
- }
+  if(q.type==="multiple"){
+    q.questions.forEach((x,i)=>{
+      box.innerHTML+=`<p>${x.q}</p>`;
+      x.opts.forEach(o=>{
+        box.innerHTML+=`<label><input type="radio" name="q${i}" value="${o}">${o}</label><br>`;
+      });
+    });
+    box.innerHTML+=`<button onclick="checkMultiple()">Auswerten</button>`;
+  }
 
- /* TEIL 3 */
- if(q.type==="fill"){
-   q.questions.forEach((x,i)=>{
-     box.innerHTML+=`<p>${x.text.replace("____",`<input id="f${i}">`)}</p>`;
-   });
-   box.innerHTML+=`<button onclick="checkFill()">Auswerten</button>`;
- }
+  if(q.type==="fill"){
+    q.questions.forEach((x,i)=>{
+      box.innerHTML+=`<p>${x.text.replace("____",`<input id="f${i}">`)}</p>`;
+    });
+    box.innerHTML+=`<button onclick="checkFill()">Auswerten</button>`;
+  }
 }
 
 /* DRAG */
 function allow(e){e.preventDefault()}
 function drag(e){e.dataTransfer.setData("sp",e.target.dataset.sp)}
 function drop(e){
- e.preventDefault();
- e.target.innerHTML+=" ← Sprecher "+e.dataTransfer.getData("sp");
- e.target.dataset.sp=e.dataTransfer.getData("sp");
+  e.preventDefault();
+  e.target.innerHTML+=" ← Sprecher "+e.dataTransfer.getData("sp");
+  e.target.dataset.sp=e.dataTransfer.getData("sp");
 }
 
 /* CHECK */
 function checkMatch(){
- const q=qs.find(x=>x.exam_id===current.id);
- document.querySelectorAll(".drop").forEach(d=>{
-   if(q.answers[d.dataset.sp]===d.dataset.person){score++;d.classList.add("correct")}
-   else if(mode==="learn") d.classList.add("wrong");
- });
- finish(q.speakers.length);
+  const q=qs.find(x=>x.exam_id===current.id);
+  document.querySelectorAll(".drop").forEach(d=>{
+    if(q.answers[d.dataset.sp]===d.dataset.person){score++; d.classList.add("correct")}
+    else if(mode==="learn") d.classList.add("wrong");
+  });
+  finish(q.speakers.length);
 }
 
 function checkMultiple(){
- const q=qs.find(x=>x.exam_id===current.id);
- q.questions.forEach((x,i)=>{
-   const sel=document.querySelector(`input[name=q${i}]:checked`);
-   if(sel && sel.value===x.correct) score++;
- });
- finish(q.questions.length);
+  const q=qs.find(x=>x.exam_id===current.id);
+  q.questions.forEach((x,i)=>{
+    const sel=document.querySelector(`input[name=q${i}]:checked`);
+    if(sel && sel.value===x.correct) score++;
+  });
+  finish(q.questions.length);
 }
 
 function checkFill(){
- const q=qs.find(x=>x.exam_id===current.id);
- q.questions.forEach((x,i)=>{
-   if(document.getElementById(`f${i}`).value.trim()===x.correct) score++;
- });
- finish(q.questions.length);
+  const q=qs.find(x=>x.exam_id===current.id);
+  q.questions.forEach((x,i)=>{
+    if(document.getElementById(`f${i}`).value.trim()===x.correct) score++;
+  });
+  finish(q.questions.length);
 }
 
 /* RESULT */
 function finish(max){
- result.classList.remove("hidden");
- result.innerHTML=`<h3>Ergebnis</h3><p>${score} / ${max}</p>`;
- const history=JSON.parse(localStorage.getItem("history")||"[]");
- history.push({user,teil:current.teil,score,max,date:new Date().toLocaleString()});
- localStorage.setItem("history",JSON.stringify(history));
+  const res=document.getElementById("result");
+  res.classList.remove("hidden");
+  res.innerHTML=`<h3>Ergebnis</h3><p>${score} / ${max}</p>`;
+  document.getElementById("printBtn").classList.remove("hidden");
+
+  const history=JSON.parse(localStorage.getItem("history")||"[]");
+  history.push({user,teil:current.teil,score,max,date:new Date().toLocaleString()});
+  localStorage.setItem("history",JSON.stringify(history));
+}
+
+/* PRINT */
+function printResult(){
+  const content = document.getElementById("q").innerHTML + document.getElementById("result").innerHTML;
+  const w = window.open();
+  w.document.write(`<html><head><title>Ergebnis</title></head><body>${content}</body></html>`);
+  w.print();
+  w.close();
 }
 </script>
 </body>
