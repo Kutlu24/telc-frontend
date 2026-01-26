@@ -1,0 +1,5 @@
+[
+  { "id": 1, "title": "Teil 1 – Gespräche", "teil": "Teil 1", "text": "Gespräch 1 ... Gespräch 8 ..." },
+  { "id": 2, "title": "Teil 2 – Interview", "teil": "Teil 2", "text": "Interview Text ..." },
+  { "id": 3, "title": "Teil 3 – Vortrag", "teil": "Teil 3", "text": "Vortrag Text ..." }
+]
