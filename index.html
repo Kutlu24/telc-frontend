@@ -1,61 +1,152 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TELC C1 Hörverstehen</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TELC C1 Listening Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
-body{font-family:Arial;background:#f2f2f2;margin:0}
-main{max-width:960px;margin:30px auto;background:#fff;padding:30px;border-radius:8px}
-.hidden{display:none}
-button,select,input{padding:8px;margin:5px}
-.drop{border:2px dashed #999;padding:6px;margin:4px;min-width:150px}
-.drag{background:#eee;padding:6px;margin:4px;cursor:grab}
-.correct{background:#c8f7c5}
-.wrong{background:#f7c5c5}
+  :root {
+    --bg: #eef1f6; --surface: #fff; --border: #d7dce6;
+    --ink: #16233f; --ink-soft: #4a5773; --ink-faint: #8892a8;
+    --accent: #9c6f0e; --accent-soft: #f5ecd8; --accent-dark: #75540a;
+    --ok: #1f7a4d; --ok-soft: #e2f3ea;
+    --bad: #a3352b; --bad-soft: #f8e6e3;
+    --shadow: 0 1px 2px rgba(22,35,63,.05), 0 8px 24px -12px rgba(22,35,63,.15);
+    --font-display: "Spectral", Georgia, serif;
+    --font-body: "IBM Plex Sans", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: var(--font-body); background: var(--bg); color: var(--ink); margin: 0;
+    line-height: 1.55; font-size: 16px;
+    background-image: radial-gradient(900px 360px at 50% -160px, rgba(156,111,14,.07), transparent 70%);
+  }
+  .topbar { height: 5px; background: linear-gradient(90deg, var(--ink), var(--accent)); }
+  main {
+    max-width: 720px; margin: 40px auto 64px; background: var(--surface);
+    padding: 36px 40px; border-radius: 14px; border: 1px solid var(--border); box-shadow: var(--shadow);
+  }
+  h1 {
+    font-family: var(--font-display); font-weight: 600; font-size: 1.7rem; margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .eyebrow {
+    font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--accent-dark); margin: 0 0 10px;
+  }
+  .subtitle { color: var(--ink-soft); margin: 0 0 24px; font-size: 0.96rem; }
+  .field { display: block; margin-bottom: 14px; }
+  .field label { display: block; font-size: 0.76rem; font-weight: 600; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  input, select {
+    width: 100%; padding: 11px 13px; border: 1px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: 0.98rem; background: var(--bg); color: var(--ink);
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); background: var(--surface); }
+  button {
+    font-family: inherit; font-size: 0.9rem; font-weight: 600; padding: 11px 22px; border-radius: 8px;
+    border: none; cursor: pointer; background: var(--ink); color: #fff; letter-spacing: 0.01em;
+    transition: background .15s, transform .1s;
+  }
+  button:hover { background: var(--ink-soft); }
+  button:active { transform: translateY(1px); }
+  .row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 18px; }
+  .row .field { flex: 1; min-width: 160px; margin-bottom: 0; }
+  .hidden { display: none !important; }
+
+  #list { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+  #list button { background: var(--surface); color: var(--ink); border: 1px solid var(--border); text-align: left; font-weight: 500; }
+  #list button:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-dark); }
+
+  #exam, #result {
+    margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);
+  }
+  #q h3 { font-family: var(--font-display); font-size: 1.1rem; margin: 18px 0 10px; }
+  #q p { margin: 10px 0 4px; }
+  #q label { display: block; padding: 6px 0; cursor: pointer; }
+
+  .drop {
+    display: inline-block; border: 2px dashed var(--border); border-radius: 8px;
+    padding: 8px 12px; margin: 4px; min-width: 160px; background: var(--bg); font-size: 0.9rem;
+  }
+  .drag {
+    display: inline-block; background: var(--accent-soft); color: var(--accent-dark); border-radius: 8px;
+    padding: 8px 12px; margin: 4px; cursor: grab; font-size: 0.9rem; font-weight: 600;
+  }
+  .correct { background: var(--ok-soft) !important; border-color: var(--ok) !important; color: var(--ok); }
+  .wrong { background: var(--bad-soft) !important; border-color: var(--bad) !important; color: var(--bad); }
+
+  #result h3 { font-family: var(--font-display); margin: 0 0 6px; }
+  #result p { font-size: 1.4rem; font-weight: 600; color: var(--accent-dark); }
+  #printBtn { margin-top: 10px; background: var(--surface); color: var(--ink); border: 1px solid var(--border); }
+  #printBtn:hover { background: var(--bg); }
+
+  @media (max-width: 560px) {
+    main { margin: 0; border-radius: 0; border: none; padding: 24px 20px; min-height: 100vh; }
+    h1 { font-size: 1.4rem; }
+  }
 </style>
 </head>
 
 <body>
+<div class="topbar"></div>
 <main>
 
 <!-- LOGIN -->
 <section id="loginBox">
-<h1>TELC C1 Hörverstehen</h1>
-<input id="user" placeholder="Benutzername"><br>
-<input type="password" id="pw" placeholder="Passwort"><br>
-<button onclick="login()">Login</button>
+  <p class="eyebrow">Exam Practice</p>
+  <h1>TELC C1 Listening Practice</h1>
+  <p class="subtitle">Practice mode for the TELC C1 Hörverstehen (listening comprehension) exam. Sign in to continue - listening texts and questions stay in German, as in the real exam.</p>
+  <div class="field">
+    <label for="user">Username</label>
+    <input id="user" placeholder="Username">
+  </div>
+  <div class="field">
+    <label for="pw">Password</label>
+    <input type="password" id="pw" placeholder="Password">
+  </div>
+  <button onclick="login()">Log in</button>
 </section>
 
 <section id="app" class="hidden">
+  <p class="eyebrow">Exam Practice</p>
+  <h1>TELC C1 Listening Practice</h1>
+  <div class="row">
+    <div class="field">
+      <label for="mode">Mode</label>
+      <select id="mode">
+        <option value="exam">Exam mode</option>
+        <option value="learn">Learn mode</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="teil">Part</label>
+      <select id="teil">
+        <option value="">Select a part</option>
+        <option>Teil 1</option>
+        <option>Teil 2</option>
+        <option>Teil 3</option>
+      </select>
+    </div>
+    <button onclick="loadExams()">Start</button>
+  </div>
 
-<select id="mode">
-<option value="exam">Prüfungsmodus</option>
-<option value="learn">Lernmodus</option>
-</select>
-
-<select id="teil">
-<option value="">Teil wählen</option>
-<option>Teil 1</option>
-<option>Teil 2</option>
-<option>Teil 3</option>
-</select>
-<button onclick="loadExams()">Start</button>
-
-<div id="list"></div>
-<div id="exam" class="hidden"></div>
-<div id="result" class="hidden"></div>
-<button id="printBtn" class="hidden" onclick="printResult()">Ergebnisse drucken</button>
-
+  <div id="list"></div>
+  <div id="exam" class="hidden"></div>
+  <div id="result" class="hidden"></div>
+  <button id="printBtn" class="hidden" onclick="printResult()">Print results</button>
 </section>
 
 </main>
-
 <script>
 let user="", mode="exam";
 let texts=[], qs=[], current=null, played=false, score=0;
 
-/* LOGIN */
+/* LOGIN - real backend call (telc-backend), token-based, not just a
+   client-side gate: see https://github.com/Kutlu24/telc-backend */
 async function login(){
   user=document.getElementById("user").value;
   const pass=document.getElementById("pw").value;
@@ -71,10 +162,10 @@ async function login(){
       localStorage.setItem("role", data.role);
       document.getElementById("loginBox").style.display="none";
       document.getElementById("app").classList.remove("hidden");
-      alert("Login erfolgreich, Rolle: " + data.role);
-    } else alert("Login fehlgeschlagen");
+      alert("Login successful, role: " + data.role);
+    } else alert("Login failed");
   } catch(e){
-    alert("Fehler: " + e.message);
+    alert("Error: " + e.message);
     console.error(e);
   }
 }
@@ -83,10 +174,10 @@ async function login(){
 async function loadExams(){
   mode=document.getElementById("mode").value;
   const teil=document.getElementById("teil").value;
-  if(!teil){alert("Bitte Teil wählen"); return;}
+  if(!teil){alert("Please select a part"); return;}
 
   const token = localStorage.getItem("token");
-  if(!token){alert("Bitte einloggen"); return;}
+  if(!token){alert("Please log in"); return;}
 
   try{
     const res = await fetch("https://telc-backend-yjs9.onrender.com/exams?teil="+encodeURIComponent(teil), {
@@ -101,9 +192,9 @@ async function loadExams(){
 
     document.getElementById("list").innerHTML="";
     texts.forEach(x=>{
-      document.getElementById("list").innerHTML+=`<button onclick="openExam(${x.id})">${x.title}</button><br>`;
+      document.getElementById("list").innerHTML+=`<button onclick="openExam(${x.id})">${x.title}</button>`;
     });
-  } catch(e){alert("Fehler: "+e.message);}
+  } catch(e){alert("Error: "+e.message);}
 }
 
 /* OPEN */
@@ -112,12 +203,12 @@ function openExam(id){
   played=false; score=0;
   const ex=document.getElementById("exam");
   ex.classList.remove("hidden");
-  ex.innerHTML=`<button onclick="play()">Audio starten</button><div id="q"></div>`;
+  ex.innerHTML=`<button onclick="play()">Play audio</button><div id="q"></div>`;
   document.getElementById("result").classList.add("hidden");
   document.getElementById("printBtn").classList.add("hidden");
 }
 
-/* AUDIO */
+/* AUDIO - listening text itself stays German (that's the exam content) */
 function play(){
   if(played) return; played=true;
   const u=new SpeechSynthesisUtterance(current.text);
@@ -133,31 +224,31 @@ function showQ(){
   box.innerHTML="";
 
   if(q.type==="match"){
-    box.innerHTML="<h3>Zuordnung</h3>";
+    box.innerHTML="<h3>Matching</h3>";
     q.options.forEach(o=>{
       box.innerHTML+=`<div class="drop" ondrop="drop(event)" ondragover="allow(event)" data-person="${o}">${o}</div>`;
     });
     q.speakers.forEach(s=>{
-      box.innerHTML+=`<div class="drag" draggable="true" ondragstart="drag(event)" data-sp="${s}">Sprecher ${s}</div>`;
+      box.innerHTML+=`<div class="drag" draggable="true" ondragstart="drag(event)" data-sp="${s}">Speaker ${s}</div>`;
     });
-    box.innerHTML+=`<button onclick="checkMatch()">Auswerten</button>`;
+    box.innerHTML+=`<button onclick="checkMatch()">Check answers</button>`;
   }
 
   if(q.type==="multiple"){
     q.questions.forEach((x,i)=>{
       box.innerHTML+=`<p>${x.q}</p>`;
       x.opts.forEach(o=>{
-        box.innerHTML+=`<label><input type="radio" name="q${i}" value="${o}">${o}</label><br>`;
+        box.innerHTML+=`<label><input type="radio" name="q${i}" value="${o}"> ${o}</label>`;
       });
     });
-    box.innerHTML+=`<button onclick="checkMultiple()">Auswerten</button>`;
+    box.innerHTML+=`<button onclick="checkMultiple()">Check answers</button>`;
   }
 
   if(q.type==="fill"){
     q.questions.forEach((x,i)=>{
       box.innerHTML+=`<p>${x.text.replace("____",`<input id="f${i}">`)}</p>`;
     });
-    box.innerHTML+=`<button onclick="checkFill()">Auswerten</button>`;
+    box.innerHTML+=`<button onclick="checkFill()">Check answers</button>`;
   }
 }
 
@@ -166,7 +257,7 @@ function allow(e){e.preventDefault()}
 function drag(e){e.dataTransfer.setData("sp",e.target.dataset.sp)}
 function drop(e){
   e.preventDefault();
-  e.target.innerHTML+=" ← Sprecher "+e.dataTransfer.getData("sp");
+  e.target.innerHTML+=" ← Speaker "+e.dataTransfer.getData("sp");
   e.target.dataset.sp=e.dataTransfer.getData("sp");
 }
 
@@ -201,7 +292,7 @@ function checkFill(){
 function finish(max){
   const res=document.getElementById("result");
   res.classList.remove("hidden");
-  res.innerHTML=`<h3>Ergebnis</h3><p>${score} / ${max}</p>`;
+  res.innerHTML=`<h3>Result</h3><p>${score} / ${max}</p>`;
   document.getElementById("printBtn").classList.remove("hidden");
 
   const history=JSON.parse(localStorage.getItem("history")||"[]");
@@ -213,7 +304,7 @@ function finish(max){
 function printResult(){
   const content = document.getElementById("q").innerHTML + document.getElementById("result").innerHTML;
   const w = window.open();
-  w.document.write(`<html><head><title>Ergebnis</title></head><body>${content}</body></html>`);
+  w.document.write(`<html><head><title>Result</title></head><body>${content}</body></html>`);
   w.print();
   w.close();
 }
